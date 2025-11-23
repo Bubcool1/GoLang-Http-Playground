@@ -4,13 +4,13 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"strconv"
 
 	"beardsall.xyz/golangHttpPlayground/config"
-	"github.com/jmoiron/sqlx"
+	"beardsall.xyz/golangHttpPlayground/helpers"
+	"beardsall.xyz/golangHttpPlayground/repository"
 )
 
-type ImportAudit struct {
+type import_audit struct {
 	Id               int     `db:"id"`
 	Filename         string  `db:"filename"`
 	FilePath         string  `db:"file_path"`
@@ -26,48 +26,44 @@ type ImportAudit struct {
 	CreatedAt        *string `db:"created_at"`
 }
 
-func GetLatestAuditRow(ctx context.Context, req *http.Request) any {
-	db := ctx.Value(config.DB_KEY).(*sqlx.DB)
+func GetPaginatedAuditRows(ctx context.Context, req *http.Request) (any, error) {
+	querySuffix := `LIMIT $1 OFFSET $2`
 
-	// Parse and validate itemCount
+	pageNumberStr := req.URL.Query().Get("pageNumber")
 	itemCountStr := req.URL.Query().Get("itemCount")
 
-	itemCount := 1
+	PageNumber := 1
+	ItemCount := config.ITEMS_PER_PAGE
+
+	var err error
+
+	if pageNumberStr != "" {
+		PageNumber, err = helpers.SafeConvertToInt(pageNumberStr)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if itemCountStr != "" {
-		parsed, err := strconv.Atoi(itemCountStr)
-		if err != nil || parsed < 1 {
-			log.Printf("invalid itemCount: %s", itemCountStr)
-			return nil // or return an error response
+		ItemCount, err = helpers.SafeConvertToInt(itemCountStr)
+		if err != nil {
+			return nil, err
 		}
-		itemCount = parsed
 	}
 
-	// Cap the limit to prevent abuse
-	if itemCount > 100 {
-		itemCount = 100
+	offset, limit := helpers.CalculatePagination(PageNumber, ItemCount, true)
+
+	return repository.ListRecords[import_audit](ctx, querySuffix, limit, offset)
+}
+
+func GetLatestAuditRow(ctx context.Context, req *http.Request) (any, error) {
+	row, err := repository.GetRecord[import_audit](ctx)
+
+	if err != nil {
+		log.Printf("error fetching audit row: %v", err)
+		return nil, err
 	}
-
-	query := `SELECT id, filename, file_path, file_size, file_modified_date, 
-			  import_start_time, import_end_time, row_count, status, 
-			  error_message, table_name, schema_version, created_at 
-			  FROM import_audit ORDER BY id DESC LIMIT $1`
-
-	if itemCount == 1 {
-		var row ImportAudit
-		if err := db.GetContext(ctx, &row, query, itemCount); err != nil {
-			log.Printf("error fetching audit row: %v", err)
-			return nil
-		}
-
-		return row
-	}
-
-	var rows []ImportAudit
-	if err := db.SelectContext(ctx, &rows, query, itemCount); err != nil {
-		log.Printf("error fetching audit rows: %v", err)
-		return nil
-	}
-	return rows
+	return row, nil
 }
 
 // This should be mapped instead of static structs, then it can be extenisbile

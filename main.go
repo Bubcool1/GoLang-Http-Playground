@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"beardsall.xyz/golangHttpPlayground/config"
 	_ "github.com/lib/pq"
 )
 
@@ -22,19 +23,22 @@ func main() {
 	for route, handler := range Routes {
 		http.HandleFunc(route, func(w http.ResponseWriter, req *http.Request) {
 			println("Received request for route: " + route)
-			handlerRes := handler(ctx, req)
+			handlerRes, err := handler(ctx, req)
 
-			if handlerRes == nil {
-				FormatResponse(w, map[string]any{
-					"error":      "Something went wrong",
-					"statusCode": 500,
-				}, req)
+			if err != nil {
+				// This needs to return the value and status code properly instead of just panik 500 errors
+				ErrVal := map[string]any{
+					"error":             "Something went wrong",
+					"statusCode":        500,
+					"additionalDetails": err.Error(),
+				}
+				FormatResponse(w, ErrVal, req)
 			}
 			FormatResponse(w, handlerRes, req)
 		})
 	}
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":"+config.PORT, nil))
 }
 
 // TODO: Reformat error handling. Should be a tuple response response, error across all funcs and the interface

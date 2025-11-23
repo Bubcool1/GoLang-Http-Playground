@@ -7,8 +7,9 @@ import (
 	"beardsall.xyz/golangHttpPlayground/handlers"
 )
 
-type HttpRequestHandler func(ctx context.Context, req *http.Request) any
+type HttpRequestHandler func(ctx context.Context, req *http.Request) (any, error)
 
 var Routes = map[string]HttpRequestHandler{
 	"/auditLatest": handlers.GetLatestAuditRow,
+	"/audit":       handlers.GetPaginatedAuditRows,
 }

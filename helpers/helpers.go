@@ -1,9 +1,13 @@
-package main
+package helpers
 
 import (
+	"log"
 	"reflect"
+	"strconv"
 	"unicode"
 	"unicode/utf8"
+
+	"beardsall.xyz/golangHttpPlayground/config"
 )
 
 func FirstToLower(s string) string {
@@ -57,4 +61,30 @@ func handleConversion(v any) any {
 
 func StructToMap(v any) any {
 	return handleConversion(v)
+}
+
+func SafeConvertToInt(v string) (int, error) {
+	parsed, err := strconv.Atoi(v)
+
+	if err != nil {
+		log.Printf("invalid value: %s", v)
+		return 0, err
+	}
+
+	return parsed, nil
+}
+
+func CalculatePagination(pageNumber, itemsPerPage int, checkMaxItems bool) (int, int) {
+	if pageNumber < 1 {
+		pageNumber = 1
+	}
+	if itemsPerPage < 1 {
+		itemsPerPage = 1
+	}
+	if checkMaxItems && itemsPerPage > config.MAX_ITEMS_PER_PAGE {
+		// TODO: Should this enforce it, throw an error? Or just cap it?
+		log.Default().Println("Items requested larger than config.MAX_ITEMS_PER_PAGE, capping to max")
+		itemsPerPage = config.MAX_ITEMS_PER_PAGE
+	}
+	return (pageNumber - 1) * itemsPerPage, itemsPerPage
 }

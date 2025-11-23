@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 
+	"beardsall.xyz/golangHttpPlayground/helpers"
 	"gopkg.in/yaml.v3"
 )
 
@@ -43,7 +44,7 @@ func FormatResponse(w http.ResponseWriter, content any, req *http.Request) error
 type convertFunc func(w http.ResponseWriter, content any) error
 
 func convertToJSON(w http.ResponseWriter, content any) error {
-	json.NewEncoder(w).Encode(StructToMap(content))
+	json.NewEncoder(w).Encode(helpers.StructToMap(content))
 
 	return nil
 }
@@ -55,7 +56,7 @@ func convertToXML(w http.ResponseWriter, content any) error {
 }
 
 func convertToYAML(w http.ResponseWriter, content any) error {
-	yaml.NewEncoder(w).Encode(StructToMap(content))
+	yaml.NewEncoder(w).Encode(helpers.StructToMap(content))
 
 	return nil
 }
