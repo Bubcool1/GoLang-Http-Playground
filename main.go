@@ -6,12 +6,14 @@ import (
 	"net/http"
 
 	"beardsall.xyz/golangHttpPlayground/config"
+	DbContextFactory "beardsall.xyz/golangHttpPlayground/dbContextFactory"
+	ResponseHandler "beardsall.xyz/golangHttpPlayground/helpers"
 	_ "github.com/lib/pq"
 )
 
 func setup() context.Context {
 	ctx := context.Background()
-	ctx = SqlDbContextFactory(ctx)
+	ctx = DbContextFactory.SqlDbContextFactory(ctx)
 
 	return ctx
 }
@@ -32,9 +34,9 @@ func main() {
 					"statusCode":        500,
 					"additionalDetails": err.Error(),
 				}
-				FormatResponse(w, ErrVal, req)
+				ResponseHandler.FormatResponse(w, ErrVal, req)
 			}
-			FormatResponse(w, handlerRes, req)
+			ResponseHandler.FormatResponse(w, handlerRes, req)
 		})
 	}
 
