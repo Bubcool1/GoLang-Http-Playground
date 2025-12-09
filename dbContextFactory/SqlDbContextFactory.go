@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"beardsall.xyz/golangHttpPlayground/config"
+	"beardsall.xyz/golanghttpplayground/config"
 	"github.com/jmoiron/sqlx"
 )
 

@@ -5,9 +5,10 @@ import (
 	"log"
 	"net/http"
 
-	"beardsall.xyz/golangHttpPlayground/config"
-	DbContextFactory "beardsall.xyz/golangHttpPlayground/dbContextFactory"
-	ResponseHandler "beardsall.xyz/golangHttpPlayground/helpers"
+	"beardsall.xyz/golanghttpplayground/config"
+	DbContextFactory "beardsall.xyz/golanghttpplayground/dbContextFactory"
+	"beardsall.xyz/golanghttpplayground/handlers"
+	ResponseHandler "beardsall.xyz/golanghttpplayground/helpers"
 	_ "github.com/lib/pq"
 )
 
@@ -16,6 +17,13 @@ func setup() context.Context {
 	ctx = DbContextFactory.SqlDbContextFactory(ctx)
 
 	return ctx
+}
+
+type HttpRequestHandler func(ctx context.Context, req *http.Request) (any, error)
+
+var Routes = map[string]HttpRequestHandler{
+	"/auditLatest": handlers.GetLatestAuditRow,
+	"/audit":       handlers.GetPaginatedAuditRows,
 }
 
 func main() {

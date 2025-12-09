@@ -4,10 +4,11 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strconv"
 
-	"beardsall.xyz/golangHttpPlayground/config"
-	"beardsall.xyz/golangHttpPlayground/helpers"
-	"beardsall.xyz/golangHttpPlayground/repository"
+	"beardsall.xyz/golanghttpplayground/config"
+	"beardsall.xyz/golanghttpplayground/helpers"
+	"beardsall.xyz/golanghttpplayground/repository"
 )
 
 type import_audit struct {
@@ -27,37 +28,40 @@ type import_audit struct {
 }
 
 func GetPaginatedAuditRows(ctx context.Context, req *http.Request) (any, error) {
-	querySuffix := `LIMIT $1 OFFSET $2`
-
-	pageNumberStr := req.URL.Query().Get("pageNumber")
-	itemCountStr := req.URL.Query().Get("itemCount")
-
-	PageNumber := 1
-	ItemCount := config.ITEMS_PER_PAGE
-
-	var err error
-
-	if pageNumberStr != "" {
-		PageNumber, err = helpers.SafeConvertToInt(pageNumberStr)
-		if err != nil {
-			return nil, err
-		}
+	req, offset, limit, err := helpers.GetPaginationDetails(req)
+	if err != nil {
+		return nil, err
 	}
-
-	if itemCountStr != "" {
-		ItemCount, err = helpers.SafeConvertToInt(itemCountStr)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	offset, limit := helpers.CalculatePagination(PageNumber, ItemCount, true)
-
-	return repository.ListRecords[import_audit](ctx, querySuffix, limit, offset)
+	// params := []repository.QueryFilter{}
+	params, linkOperator := helpers.ExtractQueryParams(req)
+	// raw_params, link_operator := helpers.ExtractQueryParams(req)
+	// for param, value := range raw_params {
+	// 	params = append(params, repository.QueryFilter{
+	// 		FieldName: param,
+	// 		Operator:  "=",
+	// 		Value:     value.(string),
+	// 	})
+	// }
+	log.Print(linkOperator)
+	params = append(params, repository.QueryFilter{
+		FieldName: config.LIMIT_PARAM,
+		Operator:  "",
+		Value:     strconv.Itoa(limit),
+	})
+	params = append(params, repository.QueryFilter{
+		FieldName: config.OFFSET_PARAM,
+		Operator:  "",
+		Value:     strconv.Itoa(offset),
+	})
+	return repository.PaginatedListRecords[import_audit](ctx, params, linkOperator)
 }
 
 func GetLatestAuditRow(ctx context.Context, req *http.Request) (any, error) {
+	// queryFilters := []repository.QueryFilter{
+	// 	{FieldName: "id", Operator: "=", Value: "50"},
+	// }
 	row, err := repository.GetRecord[import_audit](ctx)
+	// row, err := repository.GetRecord[import_audit](ctx, queryFilters...)
 
 	if err != nil {
 		log.Printf("error fetching audit row: %v", err)
