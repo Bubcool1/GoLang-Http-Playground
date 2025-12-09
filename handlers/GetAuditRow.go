@@ -32,17 +32,8 @@ func GetPaginatedAuditRows(ctx context.Context, req *http.Request) (any, error) 
 	if err != nil {
 		return nil, err
 	}
-	// params := []repository.QueryFilter{}
 	params, linkOperator := helpers.ExtractQueryParams(req)
-	// raw_params, link_operator := helpers.ExtractQueryParams(req)
-	// for param, value := range raw_params {
-	// 	params = append(params, repository.QueryFilter{
-	// 		FieldName: param,
-	// 		Operator:  "=",
-	// 		Value:     value.(string),
-	// 	})
-	// }
-	log.Print(linkOperator)
+
 	params = append(params, repository.QueryFilter{
 		FieldName: config.LIMIT_PARAM,
 		Operator:  "",
@@ -57,11 +48,7 @@ func GetPaginatedAuditRows(ctx context.Context, req *http.Request) (any, error) 
 }
 
 func GetLatestAuditRow(ctx context.Context, req *http.Request) (any, error) {
-	// queryFilters := []repository.QueryFilter{
-	// 	{FieldName: "id", Operator: "=", Value: "50"},
-	// }
 	row, err := repository.GetRecord[import_audit](ctx)
-	// row, err := repository.GetRecord[import_audit](ctx, queryFilters...)
 
 	if err != nil {
 		log.Printf("error fetching audit row: %v", err)
@@ -69,5 +56,3 @@ func GetLatestAuditRow(ctx context.Context, req *http.Request) (any, error) {
 	}
 	return row, nil
 }
-
-// This should be mapped instead of static structs, then it can be extenisbile

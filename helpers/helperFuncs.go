@@ -8,6 +8,7 @@ import (
 	"unicode/utf8"
 
 	"beardsall.xyz/golanghttpplayground/config"
+	"beardsall.xyz/golanghttpplayground/repository"
 )
 
 func FirstToLower(s string) string {
@@ -87,4 +88,13 @@ func CalculatePagination(pageNumber, itemsPerPage int, checkMaxItems bool) (int,
 		itemsPerPage = config.MAX_ITEMS_PER_PAGE
 	}
 	return (pageNumber - 1) * itemsPerPage, itemsPerPage
+}
+
+func indexOf(fieldName string, data []repository.QueryFilter) int {
+	for k, v := range data {
+		if fieldName == v.FieldName {
+			return k
+		}
+	}
+	return -1
 }

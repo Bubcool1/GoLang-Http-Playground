@@ -9,8 +9,9 @@ import (
 )
 
 func SqlDbContextFactory(ctx context.Context) context.Context {
-	println("Connecting to database")
+	log.Println("Connecting to database")
 	db, err := sqlx.Connect("postgres", config.ConnString)
+	log.Println("Connection Successful")
 	if err != nil {
 		log.Fatal(err)
 	}

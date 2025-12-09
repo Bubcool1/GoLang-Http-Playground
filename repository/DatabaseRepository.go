@@ -39,8 +39,6 @@ func ListRecordsFromQuery[T any](ctx context.Context, query string, args ...any)
 	return rows, nil
 }
 
-// This should be mapped instead of static structs, then it can be extenisbile
-
 func buildSqlQueryForType[T any](filters []QueryFilter, joinOperator string) (string, []any) {
 	var row T
 
@@ -102,7 +100,7 @@ type QueryFilter struct {
 }
 
 func GetRecord[T any](ctx context.Context, filters ...QueryFilter) (*T, error) {
-	queryString, params := buildSqlQueryForType[T](filters, "AND")
+	queryString, params := buildSqlQueryForType[T](filters, config.DEFAULT_LINK_OPERATOR)
 
 	queryString += " LIMIT 1"
 
@@ -110,7 +108,7 @@ func GetRecord[T any](ctx context.Context, filters ...QueryFilter) (*T, error) {
 }
 
 func ListRecords[T any](ctx context.Context, querySuffix string, filters ...QueryFilter) ([]T, error) {
-	queryString, args := buildSqlQueryForType[T](filters, "AND")
+	queryString, args := buildSqlQueryForType[T](filters, config.DEFAULT_LINK_OPERATOR)
 
 	if !strings.HasPrefix(querySuffix, " ") {
 		querySuffix = " " + querySuffix
@@ -140,11 +138,9 @@ func PaginatedListRecordsAdvanced[T any](ctx context.Context, querySuffix string
 
 	queryString += querySuffix
 
-	// Here is the problem, args turns into a list of strings, when it needs to be a list of ints, either that or everything needs to be string, but I think that would break for bools etc, unless we covert bools to 0/1
 	args = append(args, FilterLimit)
 	args = append(args, FilterOffset)
 
-	// len args - 2 thats where we start limit and offset
 	args_len := len(args)
 	queryString += " LIMIT $" + strconv.Itoa(args_len-1) + " OFFSET $" + strconv.Itoa(args_len)
 
